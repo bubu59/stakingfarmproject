@@ -1,2 +1,2 @@
-# stakingfarmproject
-Building up a SIngle Collateral SOl program
+# stakingproject
+Building up a simple staking program
