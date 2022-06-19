@@ -178,37 +178,6 @@ pub struct CreateUser<'info> {
     system_program: Program<'info, System>,
 }
 
-#[derive(Accounts)]
-#[instruction(nonce: u8)]
-pub struct Stake<'info> {
-    //Pool
-    #[account(mut, has_one = staking_vault,)]
-    pool: Box<Account<'info, Pool>>,
-    //Staking vault
-    #[account(mut, constraint = staking_vault.owner == *pool_signer.key,)]
-    staking_vault: Box<Account<'info, TokenAccount>>,
-    //User
-    #[account(mut, has_one = owner, has_one = pool, seeds = [owner.key.as_ref(), pool.to_account_info().key.as_ref()], bump = user.nonce,)]
-    user: Box<Account<'info, User>>,
-    owner: Signer<'info>,
-    //user staking token account
-    #[account(mut)]
-    user_staking_token_account: Box<Account<'info, TokenAccount>>,
-    //user reward token account
-    #[account(mut)]
-    user_reward_token_account: Box<Account<'info, TokenAccount>>,
-    //reward token mint
-    reward_token_mint: Box<Account<'info, Mint>>,
-    //reward token vault
-    #[account(constraint = reward_token_vault.mint == reward_token_mint.key(), constraint = reward_token_vault.owner == pool_signer.key(),)]
-    reward_token_vault: Box<Account<'info, TokenAccount>>,
-    //Program signer
-    #[account(seeds = [pool.to_account_info().key.as_ref()], bump = pool.nonce,)]
-    pool_signer: UncheckedAccount<'info>,
-    //Token Program
-    token_program: Program<'info, Token>,
-}
-
 #[account]
 pub struct Pool {
     //Priveleged account
@@ -227,20 +196,6 @@ pub struct Pool {
     pub user_stake_count: u32,
 }
 
-#[account]
-#[derive(Default)]
-pub struct User {
-    //Pool this user belongs to
-    pub pool: Pubkey,
-    //The owner of this account
-    pub owner: Pubkey,
-    //reward balance
-    pub reward_balance: u64,
-    //The amount staked
-    pub balance_staked: u64,
-    //Signer nonce(for PDA)
-    pub nonce: u8,
-}
 
 #[error_code]
 pub enum ErrorCode {
@@ -250,25 +205,4 @@ pub enum ErrorCode {
     InsufficientBalance,
 }
 
-//Transfers reward token from DAO betting wallet to user token account
 
-// fn transfer_reward(&self) -> Result<()> {
-//     let sender = &self.betting_token_pool_wallet;
-//     let sender_tokens = &self.betting_token_pool_wallet;
-//     let recipient_tokens = &self.user_token_wallet;
-//     let token_program = &self.token_program;
-
-//     //let reward_amount =
-//     let reward_amount = 10;
-
-//     let context = Transfer {
-//         from: sender_tokens.to_account_info(),
-//         to: recipient_tokens.to_account_info(),
-//         authority: sender.to_account_info(),
-//     };
-
-//     token::transfer(
-//         CpiContext::new(token_program.to_account_info(), context),
-//         reward_amount,
-//     );
-// }
