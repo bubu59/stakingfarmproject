@@ -5,8 +5,17 @@ use anchor_spl::token::{self, Mint, SetAuthority, TokenAccount, Transfer};
 use spl_token::instruction::AuthorityType;
 
 #[derive(Accounts)]
-#[instruction(nonce: u8)]
 pub struct Stake<'info> {
+
+    #[account(
+        mut,
+        constraint = staker_fund.staker == *staker.to_account_info().key,
+    )]  
+    pub staker_fund: Account<'info, Fund>,
+
+    #[account(mut)]
+    pub staker: Signer<'info>,
+
     //Pool
     #[account(mut, has_one = staking_vault,)]
     pool: Box<Account<'info, Pool>>,
@@ -33,6 +42,42 @@ pub struct Stake<'info> {
     pool_signer: UncheckedAccount<'info>,
     //Token Program
     token_program: Program<'info, Token>,
+}
+
+impl <'info> Stake<'info> {
+
+    fn transfer_token_into_vault(&self, amount: u128) -> Result<()> {
+        let sender = &self.staker;
+        let sender_of_tokens = &self.user_staking_token_account;
+        let recipient_of_tokens = &self.reward_escrow;
+        let token_program = &self.token_program;
+
+        let context = Transfer {
+            from: sender_of_tokens.to_account_info(),
+            to: recipient_of_tokens.to_account_info(),
+            authority: sneder.to_account_info(),
+        };
+
+        token::transfer(
+            CpiContext::new(token_program.to_account_info(), context),
+            amount,
+        )
+    }
+
+    fn update_user_staking_balance(&mut self, amount: u128) {
+        self.staker_fund.balance_staked += amount;
+        Ok(self.staker_fund.balance_staked)
+    }
+
+    fn update_user_reward_balance(&mut self, amount:u128) {
+        self.staker_fund.reward_balance += 
+    }
+}
+
+pub fn handler(ctx: Context<Stake>, amount: u128) -> Result<()> {
+    ctx.accounts.transfer_token_into_vault(amount);
+    ctx.accounts.update_user_staking_balance(amount);
+    ctx.account.update_user_reward_balance(amount);
 }
 
 pub fn stake(ctx: Context<Stake>, amount: u64) -> Result<()> {
